@@ -1,6 +1,5 @@
 package com.fodsdk.utils
 
-import com.fodsdk.com.fodsdk.utils.replace
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO

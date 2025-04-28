@@ -1,6 +1,5 @@
 package com.fodsdk.utils
 
-import com.fodsdk.com.fodsdk.utils.FileUtil
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
