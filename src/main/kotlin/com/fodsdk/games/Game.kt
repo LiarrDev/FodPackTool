@@ -5,6 +5,7 @@ import com.fodsdk.config.KeyStoreConfig
 import com.fodsdk.utils.*
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.FilenameFilter
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
@@ -166,6 +167,20 @@ abstract class Game(private val apk: String) {
      */
     fun patchChannelSdk() {
         // TODO
+    }
+
+    /**
+     * 计算方法数，用于分 Dex
+     */
+    fun getSmaliMethodNum(smaliFile: File): Int {
+        var count = 0
+        smaliFile.listFiles { dir, name ->
+            File(dir, name).isFile && name.endsWith(".smali")
+        }?.forEach {
+            val regex = Regex(".method")
+            count += regex.findAll(it.readText()).count()
+        }
+        return count
     }
 
     /**

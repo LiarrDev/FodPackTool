@@ -58,8 +58,8 @@ fun main(args: Array<String>) {
         replaceIcon(icon)
         replaceAppName(appName)
         replacePackageName(packageName)
-        updateConfig()
+        updateConfig(sdkVersion, pkId)
         patchChannelSdk()
-        build()
+        build(keyStore, generatePath, appVersion)
     }
 }
