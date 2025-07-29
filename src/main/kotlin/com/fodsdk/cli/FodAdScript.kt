@@ -139,3 +139,8 @@ fun build(
         println("回编译失败")
     }
 }
+
+fun packByteDance(decompileDir: String) {
+    ByteDanceHandler.handleAndroidManifest(decompileDir)
+//    ByteDanceHandler.patchChannelFile(decompileDir,)
+}
