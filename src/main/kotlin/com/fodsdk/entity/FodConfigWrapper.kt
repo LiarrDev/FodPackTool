@@ -6,5 +6,7 @@ import kotlinx.serialization.Serializable
 data class FodConfigWrapper(
     val packageName: String = "",
     val name: String = "",
-    val adParam: FodConfig = FodConfig()
+    val adParam: FodConfig = FodConfig(),
+    val source: FodGameSource = FodGameSource(),
+    val patch: String = ""
 )

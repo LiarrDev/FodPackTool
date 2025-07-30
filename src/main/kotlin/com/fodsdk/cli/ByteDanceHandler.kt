@@ -26,19 +26,35 @@ object ByteDanceHandler {
             """.trimIndent()
             )
         }
-        manifest = manifest.replace(
-            "</application>",
-            """
-                </application>
-               <queries>
-                <package android:name="com.ss.android.ugc.aweme" />
-                <package android:name="com.ss.android.ugc.aweme.lite" />
-                <package android:name="com.ss.android.article.news" />
-                <package android:name="com.ss.android.article.lite" />
-                <package android:name="com.dragon.read" />
-            </queries>
-        """.trimIndent()
-        )
+
+        manifest = if (manifest.contains("</queries>")) {
+            manifest.replace(
+                "</queries>",
+                """
+                    <package android:name="com.ss.android.ugc.aweme" />
+                    <package android:name="com.ss.android.ugc.aweme.lite" />
+                    <package android:name="com.ss.android.article.news" />
+                    <package android:name="com.ss.android.article.lite" />
+                    <package android:name="com.dragon.read" />
+                </queries>
+                """.trimIndent()
+            )
+        } else {
+            manifest.replace(
+                "</application>",
+                """
+                    </application>
+                   <queries>
+                    <package android:name="com.ss.android.ugc.aweme" />
+                    <package android:name="com.ss.android.ugc.aweme.lite" />
+                    <package android:name="com.ss.android.article.news" />
+                    <package android:name="com.ss.android.article.lite" />
+                    <package android:name="com.dragon.read" />
+                </queries>
+            """.trimIndent()
+            )
+        }
+
         manifest = manifest.replace(
             "</application>",
             """
@@ -55,8 +71,6 @@ object ByteDanceHandler {
         )
         manifestFile.writeText(manifest)
 
-
-        // TODO: style 要写入
         val valuesDir = File(decompileDir + File.separator + "res" + File.separator + "values")
         val stylesFile = File(valuesDir, "styles.xml")
         var styles = stylesFile.readText()

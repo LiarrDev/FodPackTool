@@ -3,10 +3,7 @@ package com.fodsdk.cli
 import com.fodsdk.config.KeyStoreConfig
 import com.fodsdk.entity.FodConfig
 import com.fodsdk.entity.FodConfigWrapper
-import com.fodsdk.utils.FileUtil
-import com.fodsdk.utils.command
-import com.fodsdk.utils.loadDocument
-import com.fodsdk.utils.toFile
+import com.fodsdk.utils.*
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
@@ -18,7 +15,9 @@ fun main(args: Array<String>) {
     val generatePath = args[1]              // 生成的 Apk 路径
     val apktool = args[2]                   // ApkTool 路径
     val keyStore = args[3]                  // 签名路径
-    val configPath = args[4]                // 配置路径
+    val zipAlign = args[4]                  // ZipAlign 路径
+    val apkSigner = args[5]                 // ApkSigner 路径
+    val configPath = args[6]                // 配置路径
 
     println(
         """
@@ -27,6 +26,8 @@ fun main(args: Array<String>) {
             generatePath = $generatePath
             apktool = $apktool
             keyStore = $keyStore
+            zipAlign = $zipAlign
+            apkSigner = $apkSigner
             configPath = $configPath
          ═════════════════════════════════════════════════════════════════╝
     """.trimIndent()
@@ -41,8 +42,12 @@ fun main(args: Array<String>) {
     overridePackageName(decompileDir, configWrapper.packageName)
     println("overrideAppName")
     overrideAppName(decompileDir, configWrapper.name)
+    println("overrideAppIcon")
+    overrideAppIcon(decompileDir, configWrapper.source.icon)
+    println("patchChannel")
+    packByteDance(decompileDir, configWrapper.patch)
     println("build")
-    build(originApk, decompileDir, apktool, keyStore, generatePath, configWrapper)
+    build(originApk, decompileDir, apktool, zipAlign, apkSigner, keyStore, generatePath, configWrapper)
 }
 
 private fun decompile(apk: String, decompileDir: String, apktool: String): Boolean {
@@ -108,10 +113,71 @@ private fun overrideAppName(decompileDir: String, appName: String) {
     document?.toFile(File(xml))
 }
 
+private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
+    if (icon.isBlank()) {
+        return true
+    }
+    val manifestFile = File(decompileDir, "AndroidManifest.xml")
+    AndroidXmlHandler.removeRoundIcon(manifestFile)
+    if (!icon.endsWith(".png")) {
+        println("ICON 格式不正确")
+        throw Exception("ICON 格式不正确")
+    }
+    val iconName = AndroidXmlHandler.getIconName(File(decompileDir))
+    val file = File(icon)
+    return if (file.exists() && file.isFile) {
+
+        // xxxhdpi
+        DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", iconName)
+
+        // xxhdpi 和 drawable
+        val xxhdpiImage: File? = DrawableUtil.resizeImage(
+            icon,
+            144,
+            144,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        xxhdpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", iconName)
+            it.replace(File(decompileDir + File.separator + "res" + File.separator + "drawable" + File.separator + iconName))
+        }
+
+        // xhdpi
+        val xhdpiImage: File? = DrawableUtil.resizeImage(
+            icon,
+            96,
+            96,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        xhdpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", iconName)
+        }
+
+        val lowDpiImage: File? = DrawableUtil.resizeImage(
+            icon,
+            72,
+            72,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        lowDpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "hdpi", iconName)
+            DrawableUtil.replaceIcon(decompileDir, it, "mdpi", iconName)
+            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", iconName)
+        }
+
+        true
+    } else {
+        print("ICON 路径无效")
+        false
+    }
+}
+
 fun build(
     apk: String,
     decompileDir: String,
     apktool: String,
+    zipAlign: String,
+    apkSigner: String,
     keyStorePath: String,
     generatePath: String,
     fodConfigWrapper: FodConfigWrapper
@@ -126,21 +192,31 @@ fun build(
     if ("java -jar $apktool b $decompileDir".command()) {
         println("回编译成功")
         val unsignedApk = decompileDir + File.separator + "dist" + File.separator + File(apk).name
+        val alignApk = decompileDir + File.separator + "dist" + File.separator + "align.apk"
+        if ("$zipAlign 4 $unsignedApk $alignApk".command()) {
+            println("对齐完成")
+        } else {
+            println("对齐失败")
+            throw RuntimeException("对齐失败")
+        }
+
         val storePassword = KeyStoreConfig.KEY_STORE_PASSWORD
         val keyPassword = KeyStoreConfig.KEY_PASSWORD
         val keyAlias = KeyStoreConfig.KEY_ALIAS
-        if ("jarsigner -keystore $keyStorePath -storepass $storePassword -keypass $keyPassword -signedjar $filePath $unsignedApk $keyAlias".command()) {
-            println("打包成功")
+        if ("java -jar $apkSigner sign --ks $keyStorePath --ks-key-alias $keyAlias --ks-pass pass:$storePassword --key-pass pass:$keyPassword --out $filePath $alignApk".command()) {
+            println("签名完成")
             FileUtil.delete(File(decompileDir))
+            println("打包成功")
         } else {
-            println("打包失败")
+            println("签名失败")
+            throw RuntimeException("签名失败")
         }
     } else {
         println("回编译失败")
     }
 }
 
-fun packByteDance(decompileDir: String) {
+fun packByteDance(decompileDir: String, patchDir: String) {
     ByteDanceHandler.handleAndroidManifest(decompileDir)
-//    ByteDanceHandler.patchChannelFile(decompileDir,)
+    ByteDanceHandler.patchChannelFile(decompileDir, patchDir)
 }
