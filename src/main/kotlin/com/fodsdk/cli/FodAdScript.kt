@@ -152,12 +152,14 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         normalBgName = normalBackground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
         normalFgName = normalForeground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
     }
-    println("""
+    println(
+        """
         roundBgName: ${roundBgName}
         roundFgName: ${roundFgName}
         normalBgName: ${normalBgName}
         normalFgName: ${normalFgName}
-    """.trimIndent())
+    """.trimIndent()
+    )
     return if (file.exists() && file.isFile) {
         val roundFile = File(File(decompileDir).parent, roundIconName)
         DrawableUtil.roundImage(file, roundFile)
@@ -318,6 +320,9 @@ fun build(
 }
 
 fun packByteDance(decompileDir: String, patchDir: String) {
+    if (patchDir.isBlank()) {
+        return
+    }
     ByteDanceHandler.handleAndroidManifest(decompileDir)
     ByteDanceHandler.patchChannelFile(decompileDir, patchDir)
 }
