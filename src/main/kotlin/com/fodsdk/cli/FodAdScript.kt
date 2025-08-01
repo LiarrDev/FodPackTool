@@ -5,6 +5,7 @@ import com.fodsdk.entity.FodConfig
 import com.fodsdk.entity.FodConfigWrapper
 import com.fodsdk.utils.*
 import kotlinx.serialization.json.Json
+import org.dom4j.io.SAXReader
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -118,17 +119,59 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         return true
     }
     val manifestFile = File(decompileDir, "AndroidManifest.xml")
-    AndroidXmlHandler.removeRoundIcon(manifestFile)
+//    AndroidXmlHandler.removeRoundIcon(manifestFile)
     if (!icon.endsWith(".png")) {
         println("ICON 格式不正确")
         throw Exception("ICON 格式不正确")
     }
-    val iconName = AndroidXmlHandler.getIconName(File(decompileDir))
+    val iconName = AndroidXmlHandler.getIconName(manifestFile)
+    val roundIconName = AndroidXmlHandler.getRoundIconName(manifestFile)
+
+//    AndroidXmlHandler.redirectV26Icon(decompileDir, iconName, roundIconName)
+
     val file = File(icon)
+    val v26Dir = File(decompileDir, "res" + File.separator + "mipmap-anydpi-v26")
+    println("v26 exist: ${v26Dir.exists()}")
+
+    var roundBgName: String? = null
+    var roundFgName: String? = null
+    var normalBgName: String? = null
+    var normalFgName: String? = null
+    if (v26Dir.exists()) {    // 如果有这个文件夹，就走新的逻辑
+        val roundXml = File(v26Dir, roundIconName.replace(".png", ".xml"))
+        val roundXmlDocument = SAXReader().read(roundXml)
+        val roundBackground = roundXmlDocument.rootElement.element("background").attribute("drawable").value
+        val roundForeground = roundXmlDocument.rootElement.element("foreground").attribute("drawable").value
+        roundBgName = roundBackground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
+        roundFgName = roundForeground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
+
+        val normalXml = File(v26Dir, iconName.replace(".png", ".xml"))
+        val normalXmlDocument = SAXReader().read(normalXml)
+        val normalBackground = normalXmlDocument.rootElement.element("background").attribute("drawable").value
+        val normalForeground = normalXmlDocument.rootElement.element("foreground").attribute("drawable").value
+        normalBgName = normalBackground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
+        normalFgName = normalForeground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
+    }
+    println("""
+        roundBgName: ${roundBgName}
+        roundFgName: ${roundFgName}
+        normalBgName: ${normalBgName}
+        normalFgName: ${normalFgName}
+    """.trimIndent())
     return if (file.exists() && file.isFile) {
+        val roundFile = File(File(decompileDir).parent, roundIconName)
+        DrawableUtil.roundImage(file, roundFile)
+        val roundIcon = roundFile.absolutePath
 
         // xxxhdpi
         DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", iconName)
+        DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundIconName)
+        if (v26Dir.exists()) {
+            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalBgName!!)
+            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalFgName!!)
+            DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundBgName!!)
+            DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundFgName!!)
+        }
 
         // xxhdpi 和 drawable
         val xxhdpiImage: File? = DrawableUtil.resizeImage(
@@ -140,6 +183,24 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         xxhdpiImage?.let {
             DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", iconName)
             it.replace(File(decompileDir + File.separator + "res" + File.separator + "drawable" + File.separator + iconName))
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalFgName!!)
+            }
+        }
+        val xxhdpiRoundImage: File? = DrawableUtil.resizeImage(
+            roundIcon,
+            144,
+            144,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        xxhdpiRoundImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", roundIconName)
+            it.replace(File(decompileDir + File.separator + "res" + File.separator + "drawable" + File.separator + roundIconName))
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", roundBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", roundFgName!!)
+            }
         }
 
         // xhdpi
@@ -151,6 +212,23 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         )
         xhdpiImage?.let {
             DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", iconName)
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalFgName!!)
+            }
+        }
+        val xhdpiRoundImage: File? = DrawableUtil.resizeImage(
+            roundIcon,
+            96,
+            96,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        xhdpiRoundImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", roundIconName)
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", roundBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", roundFgName!!)
+            }
         }
 
         val lowDpiImage: File? = DrawableUtil.resizeImage(
@@ -162,7 +240,30 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         lowDpiImage?.let {
             DrawableUtil.replaceIcon(decompileDir, it, "hdpi", iconName)
             DrawableUtil.replaceIcon(decompileDir, it, "mdpi", iconName)
-            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", iconName)
+//            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", iconName)
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalFgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalFgName!!)
+            }
+        }
+        val lowDpiRoundImage: File? = DrawableUtil.resizeImage(
+            roundIcon,
+            72,
+            72,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        lowDpiRoundImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "hdpi", roundIconName)
+            DrawableUtil.replaceIcon(decompileDir, it, "mdpi", roundIconName)
+//            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", roundIconName)
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", roundBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", roundFgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", roundBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", roundFgName!!)
+            }
         }
 
         true

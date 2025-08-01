@@ -1,5 +1,7 @@
 package com.fodsdk.utils
 
+import java.awt.RenderingHints
+import java.awt.geom.Ellipse2D
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -51,5 +53,33 @@ object DrawableUtil {
             e.printStackTrace()
         }
         return null
+    }
+
+    fun roundImage(input: File, output: File) {
+        val originImg = ImageIO.read(input)
+
+        val width = originImg.width
+        val height = originImg.height
+        val circleImage = BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR)
+
+        // 获取 Graphics2D 对象
+        val g2d = circleImage.createGraphics()
+
+        // 设置透明背景
+//        g2d.fillRect(0, 0, width, height)
+
+        // 创建一个圆形的剪切区域
+        val clip = Ellipse2D.Float(0f, 0f, width.toFloat(), height.toFloat())
+        g2d.clip = clip
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+        // 绘制原始图片到圆形剪切区域内
+        g2d.drawImage(originImg, 0, 0, null)
+
+        // 释放图形上下文
+        g2d.dispose()
+
+        // 保存裁剪后的图片
+        ImageIO.write(circleImage, "PNG", output)
     }
 }
