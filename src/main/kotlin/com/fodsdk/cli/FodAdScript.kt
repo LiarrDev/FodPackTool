@@ -153,10 +153,10 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         normalFgName = normalForeground.replace("@mipmap/", "").replace("@drawable/", "") + ".png"
     }
     println("""
-        roundBgName: ${roundBgName}
-        roundFgName: ${roundFgName}
-        normalBgName: ${normalBgName}
-        normalFgName: ${normalFgName}
+        roundBgName: $roundBgName
+        roundFgName: $roundFgName
+        normalBgName: $normalBgName
+        normalFgName: $normalFgName
     """.trimIndent())
     return if (file.exists() && file.isFile) {
         val roundFile = File(File(decompileDir).parent, roundIconName)
@@ -167,27 +167,13 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
         DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", iconName)
         DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundIconName)
         if (v26Dir.exists()) {
-            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalBgName!!)
-            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalFgName!!)
             DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundBgName!!)
             DrawableUtil.replaceIcon(decompileDir, roundFile, "xxxhdpi", roundFgName!!)
+            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalBgName!!)
+            DrawableUtil.replaceIcon(decompileDir, file, "xxxhdpi", normalFgName!!)
         }
 
         // xxhdpi 和 drawable
-        val xxhdpiImage: File? = DrawableUtil.resizeImage(
-            icon,
-            144,
-            144,
-            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
-        )
-        xxhdpiImage?.let {
-            DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", iconName)
-            it.replace(File(decompileDir + File.separator + "res" + File.separator + "drawable" + File.separator + iconName))
-            if (v26Dir.exists()) {
-                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalBgName!!)
-                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalFgName!!)
-            }
-        }
         val xxhdpiRoundImage: File? = DrawableUtil.resizeImage(
             roundIcon,
             144,
@@ -202,21 +188,22 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
                 DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", roundFgName!!)
             }
         }
-
-        // xhdpi
-        val xhdpiImage: File? = DrawableUtil.resizeImage(
+        val xxhdpiImage: File? = DrawableUtil.resizeImage(
             icon,
-            96,
-            96,
+            144,
+            144,
             decompileDir + File.separator + "temp_icon" + File.separator + "xx"
         )
-        xhdpiImage?.let {
-            DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", iconName)
+        xxhdpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", iconName)
+            it.replace(File(decompileDir + File.separator + "res" + File.separator + "drawable" + File.separator + iconName))
             if (v26Dir.exists()) {
-                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalBgName!!)
-                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalFgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xxhdpi", normalFgName!!)
             }
         }
+
+        // xhdpi
         val xhdpiRoundImage: File? = DrawableUtil.resizeImage(
             roundIcon,
             96,
@@ -230,24 +217,20 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
                 DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", roundFgName!!)
             }
         }
-
-        val lowDpiImage: File? = DrawableUtil.resizeImage(
+        val xhdpiImage: File? = DrawableUtil.resizeImage(
             icon,
-            72,
-            72,
+            96,
+            96,
             decompileDir + File.separator + "temp_icon" + File.separator + "xx"
         )
-        lowDpiImage?.let {
-            DrawableUtil.replaceIcon(decompileDir, it, "hdpi", iconName)
-            DrawableUtil.replaceIcon(decompileDir, it, "mdpi", iconName)
-//            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", iconName)
+        xhdpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", iconName)
             if (v26Dir.exists()) {
-                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalBgName!!)
-                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalFgName!!)
-                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalBgName!!)
-                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalFgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "xhdpi", normalFgName!!)
             }
         }
+
         val lowDpiRoundImage: File? = DrawableUtil.resizeImage(
             roundIcon,
             72,
@@ -263,6 +246,23 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
                 DrawableUtil.replaceIcon(decompileDir, it, "hdpi", roundFgName!!)
                 DrawableUtil.replaceIcon(decompileDir, it, "mdpi", roundBgName!!)
                 DrawableUtil.replaceIcon(decompileDir, it, "mdpi", roundFgName!!)
+            }
+        }
+        val lowDpiImage: File? = DrawableUtil.resizeImage(
+            icon,
+            72,
+            72,
+            decompileDir + File.separator + "temp_icon" + File.separator + "xx"
+        )
+        lowDpiImage?.let {
+            DrawableUtil.replaceIcon(decompileDir, it, "hdpi", iconName)
+            DrawableUtil.replaceIcon(decompileDir, it, "mdpi", iconName)
+//            DrawableUtil.replaceIcon(decompileDir, it, "ldpi", iconName)
+            if (v26Dir.exists()) {
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "hdpi", normalFgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalBgName!!)
+                DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalFgName!!)
             }
         }
 
