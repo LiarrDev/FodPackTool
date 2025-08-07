@@ -267,7 +267,9 @@ private fun overrideAppIcon(decompileDir: String, icon: String): Boolean {
                 DrawableUtil.replaceIcon(decompileDir, it, "mdpi", normalFgName!!)
             }
         }
-
+        if (v26Dir.exists()) {  // 移除 v26 文件夹，避免图标缩放问题
+            FileUtil.delete(v26Dir)
+        }
         true
     } else {
         print("ICON 路径无效")
