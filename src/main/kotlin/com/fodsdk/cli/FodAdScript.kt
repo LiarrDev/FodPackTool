@@ -69,8 +69,6 @@ private fun getConfigWrapper(configPath: String) = Json.decodeFromString<FodConf
 
 private fun overrideConfig(decompileDir: String, config: FodConfig) {
     val file = File(decompileDir + File.separator + "assets" + File.separator + "fod_game_config.json")
-    val sdkVer = Json.decodeFromString<FodConfig>(file.readText()).sdkver
-    config.sdkver = sdkVer
     val json = Json.encodeToString(config)
     file.writeText(json)
 }

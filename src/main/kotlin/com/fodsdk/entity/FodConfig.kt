@@ -13,6 +13,5 @@ data class FodConfig(
     val pcid: String = "",
     val cid: String = "",
     val ptid: String = "",
-    val adid: String = "",
-    var sdkver: String = ""
+    val adid: String = ""
 )
